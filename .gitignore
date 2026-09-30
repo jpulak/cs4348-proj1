@@ -67,3 +67,7 @@ vcpkg_installed/
 # test output & cache
 Testing/
 .cache/
+
+
+#keep required project makefile needed for proj
+!Makefile

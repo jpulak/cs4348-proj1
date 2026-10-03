@@ -119,7 +119,49 @@ int main(int argc, char* argv[])
     }
 
 
-    //attach shared mem segment to parent process
+    //attach the value seg to the parent
+    /*
+    functions needed/learned-
+    shmget()- create shraed memory and get an id
+    shmat()- attach it and get a usable address
+    shmdt()- detach address
+    shmctl()-delete shared memory segment
+    */
+
+    void*valAddress = shmat(valShmId, nullptr,0);
+
+    //check if attachment failed, -1 on failure
+    if (valAddress == reinterpret_cast<void*>(-1)){
+        cerr<<"error, couldnt attach shared memory for the values"<< endl;
+
+        //delete both shared memory segments 
+        shmctl(valShmId, IPC_RMID, nullptr);
+        shmctl(barrierShmId, IPC_RMID, nullptr);
+
+        return EXIT_FAILURE;
+    }
+
+    //convert attached address into the pointer type needed to store and access long long values
+    volatile long long* sharedVals= static_cast<volatile long long*> (valAddress);
+    //barrier segmet to parent
+    void* barrierAddress = shmat(barrierShmId, nullptr, 0);
+
+    //check attachment failed- -1 = failure
+    if(barrierAddress == reinterpret_cast<void*>(-1)){
+        cerr<<"error, couldnt attach shared memory for barriers" << endl;
+
+        //detach values segment since it was attached successfully before
+        shmdt (valAddress);
+
+        //delete both segments to prevent memory leak
+        shmctl(valShmId, IPC_RMID, nullptr);
+        shmctl(barrierShmId, IPC_RMID, nullptr);
+        return EXIT_FAILURE;
+    }
+    //convert general barrier address -> integer pointer
+    volatile int* barrierFlags = static_cast<volatile int*> (barrierAddress);
+
+
 
     //copy input into shared memroy and initialize all flagss
 

@@ -161,9 +161,18 @@ int main(int argc, char* argv[])
     //convert general barrier address -> integer pointer
     volatile int* barrierFlags = static_cast<volatile int*> (barrierAddress);
 
+    //copy input vals into shared memory row 0
+    for (int i=0; i< elementCnt; i++){
+        sharedVals[i] = inputVals[i]; //worker reads this row during the first calc round
+    }
+    //initialize each barrier flag to 0
+    for (size_t i=0; i< barrierCnt; i++){
+        barrierFlags[i] = 0; //mark each worker as not finished before the calcuation begins
+    }
 
-
-    //copy input into shared memroy and initialize all flagss
+    //0- children wait, 1- all children created, start working, -1- forck failed, children exit
+    volatile int* startFlag = barrierFlags+barrierCnt; 
+    *startFlag =0;
 
     //c reate exactly m child process w/ fork
 

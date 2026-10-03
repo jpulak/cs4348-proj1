@@ -57,8 +57,31 @@ int main(int argc, char* argv[])
         cerr<<"m CANNOT be greater than n" << endl;
         return EXIT_FAILURE;
     }
-    
-    //read the first n values form th einput file
+
+    //store in/out files
+    string inFileName= argv[3];
+    string outFileName=argv[4];
+
+    //open input file
+    ifstream inputFile(inFileName);
+
+    if (!inputFile){
+        cerr<<"can't open input file" <<endl;
+        return EXIT_FAILURE;
+    }
+
+    //read first n val from teh input file
+    vector<long long> inputVals(elementCnt);
+
+    for(int i=0; i< elementCnt; i++){
+        if(!(inputFile >>inputVals[i])){
+            cerr<<"error, input file has to have at least "<< elementCnt <<" valid numbers"<< endl;
+            return EXIT_FAILURE;
+        }
+    }
+
+    inputFile.close();
+
 
     //calc how many hillis steele rounds needed
 

@@ -25,8 +25,39 @@ int main(int argc, char* argv[])
         <<endl;
         return EXIT_FAILURE;
     }
-    //convert n and m into ints and validate 
 
+    //convert n and m into ints and validate w/ all possibilities
+    int elementCnt;
+    int workerCnt;
+    try{
+        size_t nChars;
+        size_t mChars;
+
+        elementCnt= stoi(argv[1], &nChars); //text-int -n
+        workerCnt = stoi(argv[2], &mChars); //text-int- m
+
+        //make sure entire arg are valid ints
+        if (nChars !=string(argv[1]).length() ||mChars !=string(argv[2]).length()){
+            cerr<<"n and m have ot be integers, invalid type"<<endl;
+            return EXIT_FAILURE;
+        }
+    }
+    catch (...)
+    {
+        cerr << "error n and m need to be valid integers" << endl;
+        return EXIT_FAILURE;
+    }
+
+    //validate n and m
+    if (elementCnt <= 0 || workerCnt <=0){
+        cerr<< "n and m need to be greater than 0, error detected" << endl;
+        return EXIT_FAILURE;
+    }
+    if (workerCnt >elementCnt){
+        cerr<<"m CANNOT be greater than n" << endl;
+        return EXIT_FAILURE;
+    }
+    
     //read the first n values form th einput file
 
     //calc how many hillis steele rounds needed

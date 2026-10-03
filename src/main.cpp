@@ -17,9 +17,14 @@ using namespace std;
 
 int main(int argc, char* argv[])
 {
-
     //first check the user provided all 4 args
 
+    if (argc !=5){
+        cerr<< "please provide valid input like this - " <<argv[0]
+        << " <n> <m> <input-file name> <output-file name>"
+        <<endl;
+        return EXIT_FAILURE;
+    }
     //convert n and m into ints and validate 
 
     //read the first n values form th einput file

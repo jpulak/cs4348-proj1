@@ -92,7 +92,32 @@ int main(int argc, char* argv[])
     //one extra int for worker starter flag
     size_t barrierBytes= (barrierCnt + 1) * sizeof(int); //wait till parent creates every worker
 
-    //create shared mem for the vals nd barrier flag
+    //create shared mem for the vals 
+    //IPC_PRIVATE- creates a System V shared mem segment
+    //IPC_CREAT | 0600- creates a new segment for this specific program
+    
+    //so create segmnet, allow the current user to read/write it
+
+    int valShmId = shmget( IPC_PRIVATE, valueBytes, IPC_CREAT | 0600);
+    //segment 1- valueShmID- input, intermediate rows, final output
+
+    if (valShmId == -1){
+        cerr<<"cant create shared memory for vals" << endl;
+        return EXIT_FAILURE;
+    }
+
+    //create shared mem for barrier flags
+    int barrierShmId = shmget( IPC_PRIVATE, barrierBytes, IPC_CREAT | 0600);
+    //segment 2- varrier flags, worker start flag
+
+    if (barrierShmId == -1){
+        cerr << "couldnt create shared memory for barrier flags" << endl;
+        //remove first segment cuz the second creation failed
+        shmctl(valShmId, IPC_RMID, nullptr);// prevent shared memory leak
+
+        return EXIT_FAILURE;
+    }
+
 
     //attach shared mem segment to parent process
 

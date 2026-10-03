@@ -79,13 +79,18 @@ int main(int argc, char* argv[])
             return EXIT_FAILURE;
         }
     }
-
     inputFile.close();
 
-
     //calc how many hillis steele rounds needed
+    int roundCnt =calculateRoundCount(elementCnt); //call worker.cpp func
 
     //calc required shared memory sizes
+
+    size_t valueCnt= static_cast<size_t>(roundCnt +1)* elementCnt; //one row for og input, one new row for every calc round
+    size_t barrierCnt = static_cast<size_t> (roundCnt) * workerCnt;// every round needs one barrier flag foe very worker
+    size_t valueBytes = valueCnt * sizeof(long long); //shmget requries teh number of bytes
+    //one extra int for worker starter flag
+    size_t barrierBytes= (barrierCnt + 1) * sizeof(int); //wait till parent creates every worker
 
     //create shared mem for the vals nd barrier flag
 

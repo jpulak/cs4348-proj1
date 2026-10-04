@@ -232,6 +232,34 @@ int main(int argc, char* argv[])
     *startFlag = 1;
 
     //parent wait for EVERY child to finish
+    bool workerSuccess =true;
+
+    //assume all workers has succeded, go through each validation for any possible failures
+    for(pid_t childPid:childPids){
+        int stat;
+        if(waitpid(childPid, &stat, 0) == -1){
+            cerr<<"error, cant wiat for worder process"<<endl;
+            workerSuccess= false;
+            continue;
+        }
+        //check if the child exited norramlly and successfully, otherweise error and failed
+        if (!WIFEXITED(stat)||WEXITSTATUS(stat) != EXIT_SUCCESS){
+            cerr<<"error, worker process has failed"<< endl;
+            workerSuccess = false; 
+        }
+    }
+
+    //stop if any of the workers has failed
+    if (!workerSuccess){
+        //detach parent from shared memroy segments shmdt, and delete shared memory segmenets shmctl
+        shmdt(valAddress);
+        shmdt(barrierAddress);
+        shmctl(valShmId,IPC_RMID, nullptr);
+        shmctl(barrierShmId, IPC_RMID, nullptr);
+
+        return EXIT_FAILURE;
+    }
+
 
     //write final shared memory row ot the output file
 

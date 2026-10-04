@@ -256,12 +256,47 @@ int main(int argc, char* argv[])
         shmdt(barrierAddress);
         shmctl(valShmId,IPC_RMID, nullptr);
         shmctl(barrierShmId, IPC_RMID, nullptr);
-
         return EXIT_FAILURE;
     }
 
+    //open output file
+    ofstream outputFile (argv[4]);
 
-    //write final shared memory row ot the output file
+    if (!outputFile.is_open()){
+        cerr<<"couldnt open file"<<endl;
+
+        // detach and delete the shared memory
+        shmdt(valAddress);
+        shmdt(barrierAddress);
+        shmctl(valShmId,IPC_RMID, nullptr);
+        shmctl(barrierShmId, IPC_RMID, nullptr);
+        return EXIT_FAILURE;
+    }
+
+    //minal result stored in the last shared memory row
+    size_t finalRow= static_cast<size_t>(roundCnt) * elementCnt;
+
+    //write final prefix sum arry into the output file
+    for (int i=0; i<elementCnt; i++){
+        outputFile <<sharedVals[finalRow+i];
+        if(i<elementCnt-1){
+            outputFile<<" ";
+        }
+    }
+    outputFile<<endl;
+
+    //chck fi the writing failed
+    if(!outputFile){
+        cerr<<"didnt write to the output file"<<endl;
+        outputFile.close();
+        shmdt(valAddress);
+        shmdt(barrierAddress);
+        shmctl(valShmId,IPC_RMID, nullptr);
+        shmctl(barrierShmId, IPC_RMID, nullptr);
+        return EXIT_FAILURE;        
+    }
+    outputFile.close();
+
 
     //detatch and then remove all shared memroy segments
 

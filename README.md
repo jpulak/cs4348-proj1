@@ -98,3 +98,11 @@ If the program successfully completes, then the prefix sum results will be store
 ## Clean project
 To remove compiled my-sum executable, run
 ```make clean```
+
+## Extra credit implementation
+- 5%- modified barrier algorithm to make the barrier object resuable while preserving original structure of algorithm
+revision- originally, we allocated workerCnt flags for every round, instead, we allocate only one flag per worker, each flag stores the latest barrier generation reached by that worker and then every worker watis until all flags have reached at leasat that generation
+-- Resue the same barrier flag during each round
+-- Using only O(m) barrier space instead of O(m logn)
+-- Preserve the original flag-array and spin-wait strucutre
+

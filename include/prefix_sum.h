@@ -7,6 +7,9 @@
 int calculateRoundCount(int n); //main and worker file (jana and cristina)
 
 //make sure worker waits untill all workers finish current round, so no worker start too early next time
+//Now resuable generation barrier
+//Each worker records t he latest barrier generation it has reached
+// A worker will wait until every worker reached at least the current generation
 void arriveAndWait(
     volatile int* barrierFlags, //shared memory flag to show which worker finished
     int round, //curr round

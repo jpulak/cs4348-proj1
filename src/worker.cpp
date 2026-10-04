@@ -15,6 +15,33 @@ int calculateRoundCount(int n)
 	return roundCount;
 }
 
+//revised arriveAndWait func to implement reusable barrier (5% extra pt)
+void arriveAndWait(volatile int* barrierFlags, int round, int workerId, int workerCnt)
+{
+    //each round represents a new barrier gen
+    int generation = round+1;
+
+    //record that this specific worker reached current generation
+    barrierFlags[workerId] = generation;
+
+    while(true){
+        int allArrived =1;
+
+        //wait till every worker reached this generation
+        for (int i = 0; i < workerCnt; i++)
+        {
+            if (barrierFlags[i] <generation){
+                allArrived=0;
+                break;
+            }
+        }
+        if(allArrived){
+            break;
+        }
+    }
+}
+
+/* 
 void arriveAndWait(volatile int* barrierFlags, int round, int workerId, int workerCnt) 
 {
 	//mark the worker as arrived at the barrier
@@ -39,6 +66,8 @@ void arriveAndWait(volatile int* barrierFlags, int round, int workerId, int work
 		}
 	}
 }
+*/
+
 
 void runWorker(int workerId, int elementCnt, int workerCnt, int roundCnt,
 	volatile long long* sharedVals, volatile int* barrierFlags)

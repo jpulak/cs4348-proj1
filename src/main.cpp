@@ -299,9 +299,32 @@ int main(int argc, char* argv[])
 
 
     //detatch and then remove all shared memroy segments
+    bool cleanup = true;
+
+    //check each shared memory to see if it has detach and deleted to remove positibility of memory leak
+    if(shmdt(valAddress) == -1){
+        cerr<< "didnt detach value shared memory"<<endl;
+        cleanup = false;
+    }
+    if(shmdt(barrierAddress) ==-1){
+        cerr<<"couldnt detach barrier shared memory" << endl;
+        cleanup= false;
+    }
+    if (shmctl(valShmId,IPC_RMID, nullptr) == -1){
+        cerr<<"couldnt delete value shared memroy" << endl;
+        cleanup= false;
+    }
+    if (shmctl(barrierShmId, IPC_RMID, nullptr)==-1){
+        cerr<<"couldnt delete barrier shared memroy"<< endl;
+        cleanup= false;
+    }
+    
+    if(!cleanup)
+    {
+        return EXIT_FAILURE;
+    }
+    return EXIT_SUCCESS;
 
     //return success after program finishes correctly
-
-
     return 0;
 }

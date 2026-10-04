@@ -174,9 +174,62 @@ int main(int argc, char* argv[])
     volatile int* startFlag = barrierFlags+barrierCnt; 
     *startFlag =0;
 
-    //c reate exactly m child process w/ fork
+    //store ids of the children created by parent
+    vector<pid_t> childPids;
+    bool forkFailed= false;
+    
+    // creae exactly m child processes
+    for(int workerId=0; workerId<workerCnt; workerId++){
+        pid_t childPid = fork();
 
-    //have ach child call the runWorker func with its worker id
+        //if PID -1, child creation failed
+        if (childPid== -1){
+            cerr<<"error, couldnt create woker process" << endl;
+            forkFailed= true;
+            break;
+        }
+
+        // fork return pid 0 indide newly creted child
+        if (childPid ==0){
+            //waiting for parent to finish creating ALL child
+            while (*startFlag ==0){}
+            //exit if the parent cant create every child
+            if(*startFlag ==-1){
+                shmdt(valAddress);
+                shmdt(barrierAddress);
+                _exit(EXIT_FAILURE);
+            }
+
+            //parent successfully created all children, now run child assigned  calcualtion
+            runWorker(workerId, elementCnt, workerCnt,roundCnt,sharedVals,barrierFlags);
+
+            //after, child no longer needs shared mem attachemnets
+            shmdt(valAddress);
+            shmdt(barrierAddress);
+
+            _exit(EXIT_SUCCESS);
+        }
+    childPids.push_back(childPid);
+    }
+
+        //handle fork failure wihtout leaving children waiting
+    if (forkFailed){
+        *startFlag = -1;
+
+        for(pid_t childPid: childPids){
+            waitpid(childPid, nullptr,0);
+        }
+
+        // detach and delete the shared memory
+        shmdt(valAddress);
+        shmdt(barrierAddress);
+        shmctl(valShmId,IPC_RMID, nullptr);
+        shmctl(barrierShmId, IPC_RMID, nullptr);
+
+        return EXIT_FAILURE;
+    }
+    //every worker was created successfully, start now
+    *startFlag = 1;
 
     //parent wait for EVERY child to finish
 

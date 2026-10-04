@@ -2,7 +2,7 @@
 
 concurrent prefix sum using fork() and sys v shared memory
 
-##Team members
+## Team members
 - Jana Pulak
 - Cristina Luu
 
@@ -93,7 +93,7 @@ Display output
 Expected output
 ```1 3 6 10 15 21 28 36```
 
-If the program successfully completes, then the prefix sum results will be stored int hte specified output file
+If the program successfully completes, then the prefix sum results will be stored in the specified output file
 
 ## Clean project
 To remove compiled my-sum executable, run

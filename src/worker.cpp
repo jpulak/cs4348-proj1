@@ -41,34 +41,6 @@ void arriveAndWait(volatile int* barrierFlags, int round, int workerId, int work
     }
 }
 
-/* 
-void arriveAndWait(volatile int* barrierFlags, int round, int workerId, int workerCnt) 
-{
-	//mark the worker as arrived at the barrier
-	barrierFlags[round * workerCnt + workerId] = 1;
-
-	while (true) 
-    {
-		//wait for all workers to arrive at the barrier
-		int allArrived = 1;
-		//if any of the flags in the round equal 0, the loop keeps spinning
-		for (int i = 0; i < workerCnt; i++) 
-        {
-			if (barrierFlags[round * workerCnt + i] == 0) 
-            {
-				allArrived = 0;
-				break;
-			}
-		}
-		if (allArrived) 
-        {
-			break;
-		}
-	}
-}
-*/
-
-
 void runWorker(int workerId, int elementCnt, int workerCnt, int roundCnt,
 	volatile long long* sharedVals, volatile int* barrierFlags)
      {

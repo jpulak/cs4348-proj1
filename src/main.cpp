@@ -87,7 +87,10 @@ int main(int argc, char* argv[])
     //calc required shared memory sizes
 
     size_t valueCnt= static_cast<size_t>(roundCnt +1)* elementCnt; //one row for og input, one new row for every calc round
-    size_t barrierCnt = static_cast<size_t> (roundCnt) * workerCnt;// every round needs one barrier flag foe very worker
+    
+    //reusable barrier needs one generation flag for each worker (5% extra pt)
+    size_t barrierCnt = static_cast<size_t>(workerCnt);
+    
     size_t valueBytes = valueCnt * sizeof(long long); //shmget requries teh number of bytes
     //one extra int for worker starter flag
     size_t barrierBytes= (barrierCnt + 1) * sizeof(int); //wait till parent creates every worker
@@ -166,6 +169,7 @@ int main(int argc, char* argv[])
         sharedVals[i] = inputVals[i]; //worker reads this row during the first calc round
     }
     //initialize each barrier flag to 0
+    //intitialize every workers barrier generation to 0
     for (size_t i=0; i< barrierCnt; i++){
         barrierFlags[i] = 0; //mark each worker as not finished before the calcuation begins
     }

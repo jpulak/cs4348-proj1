@@ -86,14 +86,17 @@ int main(int argc, char* argv[])
 
     //calc required shared memory sizes
 
-    size_t valueCnt= static_cast<size_t>(roundCnt +1)* elementCnt; //one row for og input, one new row for every calc round
+	size_t valueCnt = static_cast<size_t>(2) * elementCnt; //one row for the previous round, one row for the current round
     
     //reusable barrier needs one generation flag for each worker (5% extra pt)
-    size_t barrierCnt = static_cast<size_t>(workerCnt);
+	//reusable barrier uses 3 flags, one to keep track of turns, one to keep track of generation, and one as the startFlag(10% extra pt)
+    //O(3) -> O(1)
+    size_t barrierCnt = 3;
     
     size_t valueBytes = valueCnt * sizeof(long long); //shmget requries teh number of bytes
-    //one extra int for worker starter flag
-    size_t barrierBytes= (barrierCnt + 1) * sizeof(int); //wait till parent creates every worker
+
+    //All flags are already accounted for in barrierCnt
+    size_t barrierBytes= barrierCnt * sizeof(int); //wait till parent creates every worker
 
     //create shared mem for the vals 
     //IPC_PRIVATE- creates a System V shared mem segment
@@ -169,13 +172,12 @@ int main(int argc, char* argv[])
         sharedVals[i] = inputVals[i]; //worker reads this row during the first calc round
     }
     //initialize each barrier flag to 0
-    //intitialize every workers barrier generation to 0
-    for (size_t i=0; i< barrierCnt; i++){
-        barrierFlags[i] = 0; //mark each worker as not finished before the calcuation begins
-    }
+    barrierFlags[0] = 0; // worker turn flag
+	barrierFlags[1] = 0; // generation flag
+	barrierFlags[2] = 0; // workers cannot start until parent finishes creating all children(not for barrier for process control)
 
     //0- children wait, 1- all children created, start working, -1- forck failed, children exit
-    volatile int* startFlag = barrierFlags+barrierCnt; 
+    volatile int* startFlag = barrierFlags+2; 
     *startFlag =0;
 
     //store ids of the children created by parent
@@ -277,8 +279,15 @@ int main(int argc, char* argv[])
         return EXIT_FAILURE;
     }
 
-    //minal result stored in the last shared memory row
-    size_t finalRow= static_cast<size_t>(roundCnt) * elementCnt;
+    //final result stored in either row 0 or row 1 depending on the number of rounds(10% extra pt)
+    size_t finalRow;
+
+	if (roundCnt % 2 == 0) {
+		finalRow = 0; //even rounds, the final result in row 0
+	}
+	else {
+		finalRow = elementCnt; //odd rounds, the final result in row 1
+	}
 
     //write final prefix sum arry into the output file
     for (int i=0; i<elementCnt; i++){

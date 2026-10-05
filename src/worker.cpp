@@ -16,35 +16,38 @@ int calculateRoundCount(int n)
 }
 
 //revised arriveAndWait func to implement reusable barrier (5% extra pt)
+//revised arriveAndWait for the reusable barrier to use only O(1) space(10% extra pt)
 void arriveAndWait(volatile int* barrierFlags, int round, int workerId, int workerCnt)
 {
-    //each round represents a new barrier gen
-    int generation = round+1;
+	while (barrierFlags[0] != workerId) {
+		//wait for the worker's turn to arrive
+	}
 
-    //record that this specific worker reached current generation
-    barrierFlags[workerId] = generation;
+	if (workerId == workerCnt - 1) {
+		//release workers waiting for complete generation
+		barrierFlags[1] = round + 1;
 
-    while(true){
-        int allArrived =1;
+		//reset the arrival turn for the next generation
+		barrierFlags[0] = 0;
+	}
+	else {
+		barrierFlags[0] = workerId + 1;
+		
+		while (barrierFlags[1] < round +1) {
+			//wait for the last worker to finish and them update the generation flag
+		}
+	}
 
-        //wait till every worker reached this generation
-        for (int i = 0; i < workerCnt; i++)
-        {
-            if (barrierFlags[i] <generation){
-                allArrived=0;
-                break;
-            }
-        }
-        if(allArrived){
-            break;
-        }
-    }
 }
 
+//revised runWorker to use only O(n) space (10% extra pt)
 void runWorker(int workerId, int elementCnt, int workerCnt, int roundCnt,
 	volatile long long* sharedVals, volatile int* barrierFlags)
      {
-	int offset = 1;
+	int offset = 1; //offset for Hillis-Steele algorithm
+	//we only need the previous row and the current row for the Hillis-Steele algorithm, so we can use two rows in shared memory to store the values
+	int currentOffset;
+	int nextOffset;
 
 	//calculate the number of elements each worker will process
 	int baseWork = elementCnt / workerCnt;
@@ -64,10 +67,16 @@ void runWorker(int workerId, int elementCnt, int workerCnt, int roundCnt,
 	//go through every round of the Hillis-Steele algorithm
 	for (int round = 0; round < roundCnt; round++) 
     {
-		//offset is set at 1 for the first round and doubles each time
-		if (round != 0) 
-        {
-			offset = offset * 2;
+		//will go back and forth between the current and next offset for each round(generation)
+		if (round % 2 == 0)
+		{
+			currentOffset = 0; // read from row 0
+			nextOffset = elementCnt; // write to row 1
+		}
+		else
+		{
+			currentOffset = elementCnt; // read from row 1
+			nextOffset = 0; // write to row 0
 		}
 
 		//make calcluations according to Hillis-Steele algorithm
@@ -77,18 +86,20 @@ void runWorker(int workerId, int elementCnt, int workerCnt, int roundCnt,
 			if (i < offset) 
             {
 				//x^i+1_j = x^i_j / add prev val to val offset position to its left
-				sharedVals[(round + 1) * elementCnt + i] = sharedVals[round * elementCnt + i];
+				sharedVals[nextOffset + i] = sharedVals[currentOffset + i];
 			}
 			else 
             {
 				//x^i+1_j = x^i_j + x^i_j-2^i
 				int offsetIndex = i - offset;
-				sharedVals[(round + 1) * elementCnt + i] = sharedVals[round * elementCnt + offsetIndex] + sharedVals[round * elementCnt + i];
+				sharedVals[nextOffset + i] = sharedVals[currentOffset + offsetIndex] + sharedVals[currentOffset + i];
 			}
 		}
 
 		//call the barrier to wait for all other workers to finish
 		arriveAndWait(barrierFlags, round, workerId, workerCnt);
+
+		offset *= 2; //double the offset for the next round
 	}
 
 }
